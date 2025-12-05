@@ -9,8 +9,9 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                dir('sample-app')
-                sh 'mvn clean install'
+                dir('sample-app') {
+                    sh 'mvn clean install'
+                }
             }
             post {
                 success {
