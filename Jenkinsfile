@@ -13,11 +13,11 @@ pipeline {
                     sh 'mvn clean install'
                 }
             }
-            post {
-                success {
-                    archiveartifacts artifacts: '**/target/*.war'
-                }
-            }
+        }
+    }
+    post {
+        success {
+            archiveartifacts artifacts: '**/target/*.war'
         }
     }
 }
