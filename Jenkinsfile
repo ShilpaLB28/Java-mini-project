@@ -5,17 +5,13 @@ pipeline {
     stages {
         stage('Build') {
             steps {
-                echo "build step"
+                dir('sample-app')
+                sh 'mvn clean install'
             }
-        }
-        stage('test') {
-            steps {
-                echo "test stage"
-            }
-        }
-        stage('deploy') {
-            steps {
-                echo "deploy stage"
+            post {
+                success {
+                    archiveartifacts artifacts: '**/target/*.war'
+                }
             }
         }
     }
