@@ -1,43 +1,62 @@
 pipeline {
     agent any
-    parameters {
-        string defaultValue: 'L B', name: 'LastName'
-        }
-
-    environment {
-        NAME = "shilpa"
-    }
-    tools { 
+    tools {
         jdk 'jdk17'
         maven 'maven3'
     }
     stages {
-        stage('Build') {
+      stage('Checkout Code') {
             steps {
-                dir('sample-app') {
-                    sh 'mvn clean install'
-                    echo "hello $NAME ${params.LastName}"
-                }
+                git branch: 'main',
+                    url: 'https://github.com/ShilpaLB28/Java-mini-project.git'
             }
         }
-        stage('test') {
-            parallel {
-                stage('test A') {
-                    steps {
-                        echo "test a"
-                    }
-                }
-                stage('test B') {
-                    steps {
-                        echo "test b"
-                    }
-                }
-            }
-        }
+  stage('build') {
+    steps {
+      dir('sample-app') {
+      sh 'mvn clean package -DskipTests'
+      }
     }
-    post {
-        success {
-            archiveArtifacts artifacts: '**/target/*.war'
-        }
+  }
+  stage('deploy') {
+    steps {
+      sshagent(credentials: ['tomcat_ssh_key']) {
+        sh """
+        echo "deploying war to tomcat server"
+        WAR_FILE=\$(ls sample-app/target/*.war)
+                        FILE_NAME=\$(basename "\$WAR_FILE")
+
+                        # Hardcoded Tomcat Server Details
+                        SERVER_IP=54.242.49.250
+                        SERVER_USER=ubuntu
+                        TOMCAT_DIR=/opt/tomcat/webapps
+
+                        echo "Using server IP: \$SERVER_IP"
+
+                        # Copy WAR file to remote /tmp
+                        scp -o StrictHostKeyChecking=no "\$WAR_FILE" \$SERVER_USER@\$SERVER_IP:/tmp/
+
+                        # Move WAR file to Tomcat's webapps directory
+                        ssh -o StrictHostKeyChecking=no \$SERVER_USER@\$SERVER_IP "sudo mv /tmp/\$FILE_NAME \$TOMCAT_DIR/"
+
+                        # Restart Tomcat
+                        ssh -o StrictHostKeyChecking=no \$SERVER_USER@\$SERVER_IP "sudo systemctl restart tomcat"
+
+                        echo "Deployment completed successfully!"
+                    """
+      }
     }
+  }
+
+}
+post {
+  success {
+    echo "job built successfully"
+    archiveArtifacts artifacts: '**/target/*.war'
+  }
+  failure {
+    echo "job built was a failure"
+  }
+}
+
 }
