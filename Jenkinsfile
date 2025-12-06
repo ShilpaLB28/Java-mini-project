@@ -20,6 +20,20 @@ pipeline {
                 }
             }
         }
+        stage('test') {
+            parallel {
+                stage('test A') {
+                    steps {
+                        echo "test a"
+                    }
+                }
+                stage('test B') {
+                    steps {
+                        echo "test b"
+                    }
+                }
+            }
+        }
     }
     post {
         success {
