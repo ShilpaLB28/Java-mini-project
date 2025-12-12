@@ -4,6 +4,10 @@ pipeline {
         jdk 'jdk17'
         maven 'maven3'
     }
+    environment {
+      SONARQUBE_URL='http://44.223.35.6:9000'
+      SONARQUBE_TOKEN=credentials('Sonar-token')
+    }
     stages {
       stage('Checkout Code') {
             steps {
@@ -15,6 +19,18 @@ pipeline {
     steps {
       dir('sample-app') {
       sh 'mvn clean package -DskipTests'
+      }
+    }
+  }
+  stage('Sonarqube Analysis') {
+    steps {
+      dir('sample-app') {
+        sh """
+        mvn sonar:sonar \
+        -Dsonar.projectKey=JavaMiniProject \
+        -Dsonar.host.url=$SONARQUBE_URL \
+        -Dsonar.login=$SONARQUBE_TOKEN
+        """
       }
     }
   }
